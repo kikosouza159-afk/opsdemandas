@@ -23,6 +23,14 @@ app.secret_key = os.getenv("SECRET_KEY", "troque-esta-chave-em-producao")
 DATABASE_URL = os.getenv("DATABASE_URL", "").strip()
 USING_POSTGRES = bool(DATABASE_URL and psycopg2)
 
+@app.errorhandler(Exception)
+def handle_exception(e):
+    app.logger.exception("Erro interno no servidor")
+    return jsonify({
+        "ok": False,
+        "error": str(e)
+    }), 500
+
 USERS_SEED = {
     "admin": {"password": "olos123", "role": "admin"},
     "gerber": {"password": "olos123", "role": "admin"},
