@@ -1,0 +1,7 @@
+[
+  {"id":1,"cliente":"ENERGISA","data":"2026-05-20","melhoria":"Ajustar frase de abordagem inicial do bot","observacao":"Deixar a abertura mais curta, natural e direta para reduzir latência percebida na interação.","responsavel":"Michele","prazo":"2026-05-24","status":"Em Andamento"},
+  {"id":2,"cliente":"TALENTOS","data":"2026-05-20","melhoria":"Corrigir fluxo de terceiro desconhecido","observacao":"Quando a pessoa informar que não conhece o cliente, o fluxo deve validar telefone incorreto ou solicitar outro contato.","responsavel":"Elvis","prazo":"2026-05-23","status":"Pendentes"},
+  {"id":3,"cliente":"Verisure","data":"2026-05-21","melhoria":"Normalizar nomes antes da vocalização","observacao":"Padronizar nomes com acentuação e pronúncia para melhorar naturalidade e assertividade do atendimento.","responsavel":"Hildebrando","prazo":"2026-05-27","status":"Em Andamento"},
+  {"id":4,"cliente":"PagBank","data":"2026-05-21","melhoria":"Revisar regra de encerramento por WhatsApp","observacao":"Criar frase de encerramento com orientação objetiva para continuidade do atendimento via WhatsApp.","responsavel":"Gerber","prazo":"2026-05-29","status":"Paralisado"},
+  {"id":5,"cliente":"NW  ADVOGADOS","data":"2026-05-22","melhoria":"Homologar frase padrão de encerramento","observacao":"Aplicar comunicação final: A Energisa agradece. Tenha um bom dia.","responsavel":"Michele","prazo":"2026-05-30","status":"Concluído"}
+]

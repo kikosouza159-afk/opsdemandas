@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Painel Executivo de Demandas</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="animated-bg" id="animatedBg"><span class="orb one"></span><span class="orb two"></span><span class="orb three"></span></div>
+<canvas id="networkCanvas"></canvas>
+
+<section class="login-screen" id="loginScreen">
+  <div class="login-card">
+    <div class="login-logo">OSP</div>
+    <p class="eyebrow">Acesso restrito</p>
+    <h2>Login da Esteira</h2>
+    <p>Entre com seu usuário para registrar, editar e acompanhar as demandas. Exclusão fica como histórico e não apaga definitivamente do banco.</p>
+    <div class="login-form">
+      <div><label>Usuário</label><input id="loginUser" autocomplete="username" placeholder="ex: admin" onkeydown="loginKey(event)"></div>
+      <div><label>Senha</label><input id="loginPass" type="password" autocomplete="current-password" placeholder="Digite sua senha" onkeydown="loginKey(event)"></div>
+      <div class="login-error" id="loginError"></div>
+      <button class="primary" onclick="login()">Entrar</button>
+    </div>
+    <div class="login-foot">Usuários iniciais: <code>admin</code>, <code>gerber</code>, <code>elvis</code>, <code>michele</code>, <code>nubia</code>, <code>marcelo</code>, <code>hilde</code> e <code>antonio</code>. Senha inicial: <code>olos123</code>.</div>
+  </div>
+</section>
+
+<main class="shell hidden" id="appShell">
+  <section class="topbar">
+    <div>
+      <p class="eyebrow">Gestão executiva de melhorias</p>
+      <h1>Esteira Resumida de Demandas</h1>
+      <p class="subtitle">Priorize, filtre por cliente, importe em massa e mantenha tudo salvo em banco mesmo após novo deploy.</p>
+    </div>
+    <div class="actions">
+      <div class="user-pill">Usuário <strong id="usuarioLogado">-</strong> <span id="perfilUsuario" class="role-user">USUÁRIO</span></div>
+      <button class="ghost" onclick="logout()">Sair</button>
+      <button class="ghost" onclick="baixarModeloImportacao()">Baixar Modelo</button>
+      <button class="ghost" onclick="document.getElementById('importFile').click()">Importar Excel/CSV</button>
+      <input id="importFile" type="file" accept=".xlsx,.xls,.csv" style="display:none" onchange="importarArquivoMassivo(event)">
+      <button class="ghost" onclick="exportarCSV()">Exportar CSV</button>
+      <button class="primary" onclick="abrirModal()">+ Nova demanda</button>
+    </div>
+  </section>
+
+  <section class="cards">
+    <article class="card" data-status-card="Todos" onclick="setStatus('Todos')" title="Filtrar por todos"><span>Total</span><strong id="kTotal">0</strong></article>
+    <article class="card" data-status-card="Em Andamento" onclick="setStatus('Em Andamento')" title="Filtrar por Em Andamento"><span>Em Andamento</span><strong id="kAndamento">0</strong></article>
+    <article class="card concluido-card" data-status-card="Concluído" onclick="setStatus('Concluído')" title="Filtrar por Concluído"><span>Concluído</span><strong id="kConcluido">0</strong></article>
+    <article class="card" data-status-card="Pendentes" onclick="setStatus('Pendentes')" title="Filtrar por Pendentes"><span>Pendentes</span><strong id="kPendente">0</strong></article>
+    <article class="card" data-status-card="Paralisado" onclick="setStatus('Paralisado')" title="Filtrar por Paralisado"><span>Paralisado</span><strong id="kParalisado">0</strong></article>
+  </section>
+
+  <section class="panel">
+    <div class="toolbar">
+      <div class="field"><label>Buscar por cliente, melhoria, observação ou responsável</label><input id="busca" placeholder="Digite para filtrar..." oninput="render()"></div>
+      <div class="field"><label>Cliente</label><select id="fCliente" onchange="render()"></select></div>
+      <div class="field"><label>Status</label><select id="fStatus" onchange="render()"><option value="Todos">Todos</option><option>Em Andamento</option><option>Concluído</option><option>Pendentes</option><option>Paralisado</option></select></div>
+      <div class="field"><label>Responsável</label><input id="fResponsavel" placeholder="Ex: Michele" oninput="render()"></div>
+      <div class="field"><label>Visão</label><select id="densidade" onchange="document.body.classList.toggle('compact',this.value==='compacto')"><option value="normal">Normal</option><option value="compacto">Compacta</option></select></div>
+      <button onclick="limparFiltros()">Limpar</button>
+    </div>
+
+    <div class="status-tabs" id="tabs"></div>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th></th><th>Id Prioridade</th><th>Cliente</th><th>Data</th><th>Melhoria</th><th>Observação</th><th>Responsável</th><th>Prazo</th><th>Status</th><th>Ações</th></tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+    <div class="hint">Regra aplicada: nova demanda entra no último ID. Ao arrastar uma linha, a ordem é recalculada de 1 até N automaticamente e gravada no banco. Exclusão é lógica: nada é apagado definitivamente.</div>
+  </section>
+</main>
+
+<div class="modal" id="modal">
+  <div class="modal-card">
+    <div class="modal-head"><h2 id="modalTitle">Nova demanda</h2><button onclick="fecharModal()">Fechar</button></div>
+    <input type="hidden" id="editId">
+    <div class="form-grid">
+      <div><label>Cliente</label><select id="cliente"></select></div>
+      <div><label>Status</label><select id="status"><option>Em Andamento</option><option>Concluído</option><option>Pendentes</option><option>Paralisado</option></select></div>
+      <div><label>Data da inclusão</label><input id="data" type="date"></div>
+      <div><label>Prazo de finalização</label><input id="prazo" type="date"></div>
+      <div class="wide"><label>Melhoria</label><input id="melhoria" placeholder="Título resumido da demanda"></div>
+      <div class="wide"><label>Observação</label><textarea id="observacao" placeholder="Detalhe o contexto, regra ou evidência da melhoria"></textarea></div>
+      <div><label>Responsável</label><input id="responsavel" placeholder="Autor responsável"></div>
+    </div>
+    <div class="modal-foot"><button onclick="fecharModal()">Cancelar</button><button class="primary" onclick="salvarDemanda()">Salvar</button></div>
+    <div class="audit-note">Toda inclusão, edição, status, reordenação e exclusão lógica gera registro de auditoria no banco.</div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
