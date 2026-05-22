@@ -217,7 +217,7 @@ def init_db():
             seed_path = BASE_DIR / "seed_initial.json"
             seed = json.loads(seed_path.read_text(encoding="utf-8")) if seed_path.exists() else []
             for idx, item in enumerate(seed, start=1):
-                insert_demand(cur, item, username="seed", priority=idx, audit=False)
+                insert_demand(cur, item, username="seed", priority=idx, audit_enabled=False)
 
 
 def audit(cur, demand_id, action, username, payload):
@@ -225,7 +225,7 @@ def audit(cur, demand_id, action, username, payload):
             (demand_id, action, username, json.dumps(payload, ensure_ascii=False), now_iso()))
 
 
-def insert_demand(cur, payload, username, priority=None, audit=True):
+def insert_demand(cur, payload, username, priority=None, audit_enabled=True):
     status = normalize_status(payload.get("status"))
     data = normalize_date(payload.get("data")) or date.today().isoformat()
     prazo = normalize_date(payload.get("prazo"))
@@ -255,7 +255,7 @@ def insert_demand(cur, payload, username, priority=None, audit=True):
     else:
         execute(cur, "SELECT last_insert_rowid() AS id")
     new_id = fetchone(cur)["id"]
-    if audit:
+    if audit_enabled:
         audit(cur, new_id, "create", username, payload)
     return new_id
 
